@@ -1,0 +1,407 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "kratos-practice/api/v1;v1";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Kratos Service API";
+    version: "1.0";
+    description: "Kratos服务接口文档";
+  };
+  schemes: HTTP;
+  security_definitions: {
+    security: {
+      key: "api_key";
+      value: {
+        type: TYPE_API_KEY;
+        in: IN_HEADER;
+        name: "Authorization";
+      }
+    }
+  };
+  security: {
+    security_requirement: []
+  }
+};
+
+//service Api {
+//  rpc ListUser (ListUserReq) returns (ListUserReply) {
+//    option (google.api.http) = {
+//      get: "/user/list"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "分页获取用户列表";
+//      description: "按条件分页查询用户数据";
+//    };
+//  }
+//
+//  rpc GetUser (UserReq) returns (UserReply) {
+//    option (google.api.http) = {
+//      get: "/user/{id}"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "获取用户详情";
+//    };
+//  }
+//
+//  rpc SaveUser (SaveUserReq) returns (google.protobuf.Empty) {
+//    option (google.api.http) = {
+//      post: "/user"
+//      body: "*"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "保存用户";
+//    };
+//  }
+//
+//  rpc UpdateUser (UpdateUserReq) returns (google.protobuf.Empty) {
+//    option (google.api.http) = {
+//      put: "/user"
+//      body: "*"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "更新用户";
+//    };
+//  }
+//
+//  rpc DeleteUser (DeleteUserReq) returns (google.protobuf.Empty) {
+//    option (google.api.http) = {
+//      delete: "/user/{id}"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "删除用户";
+//    };
+//  }
+//
+//  rpc ListCar (ListCarReq) returns (ListCarReply) {
+//    option (google.api.http) = {
+//      get: "/car/list"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "分页获取汽车列表";
+//    };
+//  }
+//
+//  rpc GetCar (CarReq) returns (CarReply) {
+//    option (google.api.http) = {
+//      get: "/car/{id}"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "获取汽车详情";
+//    };
+//  }
+//
+//  rpc SaveCar (SaveCarReq) returns (google.protobuf.Empty) {
+//    option (google.api.http) = {
+//      post: "/car"
+//      body: "*"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "保存汽车";
+//    };
+//  }
+//
+//  rpc UpdateCar (UpdateCarReq) returns (google.protobuf.Empty) {
+//    option (google.api.http) = {
+//      put: "/car"
+//      body: "*"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "更新汽车";
+//    };
+//  }
+//
+//  rpc DeleteCar (DeleteCarReq) returns (google.protobuf.Empty) {
+//    option (google.api.http) = {
+//      delete: "/car/{id}"
+//    };
+//    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+//      summary: "删除汽车";
+//    };
+//  }
+//}
+
+service User {
+  rpc ListUser (ListUserReq) returns (ListUserReply) {
+    option (google.api.http) = {
+      get: "/user/list"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "分页获取用户列表";
+      description: "按条件分页查询用户数据";
+    };
+  }
+
+  rpc GetUser (UserReq) returns (UserReply) {
+    option (google.api.http) = {
+      get: "/user/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "获取用户详情";
+      description: "使用了redis"
+    };
+  }
+
+  rpc SaveUser (SaveUserReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/user"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "保存用户";
+    };
+  }
+
+  rpc UpdateUser (UpdateUserReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/user"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "更新用户";
+    };
+  }
+
+  rpc DeleteUser (DeleteUserReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/user/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "删除用户";
+    };
+  }
+}
+
+service Car {
+  rpc ListCar (ListCarReq) returns (ListCarReply) {
+    option (google.api.http) = {
+      get: "/car/list"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "分页获取汽车列表";
+    };
+  }
+
+  rpc GetCar (CarReq) returns (CarReply) {
+    option (google.api.http) = {
+      get: "/car/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "获取汽车详情";
+    };
+  }
+
+  rpc SaveCar (SaveCarReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/car"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "保存汽车";
+    };
+  }
+
+  rpc UpdateCar (UpdateCarReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/car"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "更新汽车";
+    };
+  }
+
+  rpc DeleteCar (DeleteCarReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/car/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "删除汽车";
+    };
+  }
+}
+
+message ListUserReq {
+  optional int32 page = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "页码"
+    }
+  ];;
+  optional int32 page_size = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "每页大小"
+    }
+  ];;
+  optional string username = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户昵称"
+    }
+  ];
+}
+
+message ListUserReply {
+  int32 total = 1;
+  repeated UserReply list = 2;
+}
+
+message UserReq {
+  int64 id = 1;
+}
+
+message UserReply {
+  int64 id = 1;
+  string username = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户昵称"
+    }
+  ];
+  string password = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "密码"
+    }
+  ];
+  string created_at = 4 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "创建时间"
+    }
+  ];
+}
+
+message SaveUserReq {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      required: ["username", "password"]
+    }
+  };
+  string username = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户昵称"
+    }
+  ];
+  string password = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "密码"
+    }
+  ];
+}
+
+message UpdateUserReq {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      required: ["id"]
+    }
+  };
+  int64 id = 1;
+  optional string username = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户昵称"
+    }
+  ];
+  optional string password = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "密码"
+    }
+  ];
+}
+
+message DeleteUserReq {
+  int64 id = 1;
+}
+
+message ListCarReq {
+  optional int32 page = 1 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "页码"
+    }
+  ];;
+  optional int32 page_size = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "每页大小"
+    }
+  ];;
+  optional string username = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户昵称"
+    }
+  ];
+  optional string model = 4 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "汽车型号"
+    }
+  ];
+}
+
+message ListCarReply {
+  int32 total = 1;
+  repeated CarReply list = 2;
+}
+
+message CarReq {
+  int64 id = 1;
+}
+
+message CarReply {
+  int64 id = 1;
+  string username = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户昵称"
+    }
+  ];
+  string model = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "汽车型号"
+    }
+  ];
+  string registered_at = 4 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "登记时间"
+    }
+  ];
+}
+
+message SaveCarReq {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      required: ["user_id", "model"]
+    }
+  };
+  int64 user_id = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户id"
+    }
+  ];
+  string model = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "汽车型号"
+    }
+  ];
+}
+
+message UpdateCarReq {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {
+      required: ["id"]
+    }
+  };
+  int64 id = 1;
+  optional int64 user_id = 2 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "用户id"
+    }
+  ];
+  optional string model = 3 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "汽车型号"
+    }
+  ];
+}
+
+message DeleteCarReq {
+  int64 id = 1;
+}
