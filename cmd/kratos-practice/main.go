@@ -3,40 +3,36 @@ package main
 import (
 	"flag"
 	"github.com/go-kratos/kratos/v2"
-	zlog "kratos-practice/internal/pkg/log"
-	"os"
-
-	"github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"kratos-practice/internal/conf"
+	"kratos-practice/internal/pkg/util/bootstrap"
 )
 
-// go build -ldflags "-X main.Version=x.y.z"
+// go build -ldflags "-X main.Service.Version=x.y.z"
 var (
-	// Name is the name of the compiled software.
-	Name string
-	// Version is the version of the compiled software.
-	Version string
-	// flagconf is the config flag.
-	flagconf string
+	Service = bootstrap.NewServiceInfo(
+		"kratos-practice",
+		"1.0.0",
+		"",
+	)
 
-	id, _ = os.Hostname()
+	Flags = bootstrap.NewCommandFlags()
 )
 
 func init() {
-	flag.StringVar(&flagconf, "conf", "./configs", "config path, eg: -conf config.yaml")
-	//flag.StringVar(&flagconf, "conf", "/Users/admin/Documents/project/go/kratos-practice/configs", "config path, eg: -conf config.yaml")
+	Flags.Init()
+
 }
 
 func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 	return kratos.New(
-		kratos.ID(id),
-		kratos.Name(Name),
-		kratos.Version(Version),
-		kratos.Metadata(map[string]string{}),
+		kratos.ID(Service.GetInstanceId()),
+		kratos.Name(Service.Name),
+		kratos.Version(Service.Version),
+		kratos.Metadata(Service.Metadata),
 		kratos.Logger(logger),
 		kratos.Server(
 			hs,
@@ -45,16 +41,9 @@ func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
 	)
 }
 
-func main() {
-	flag.Parse()
-
-	c := config.New(
-		config.WithSource(
-			file.NewSource(flagconf),
-		),
-	)
-	defer c.Close()
-
+// 加载配置
+func loadConfig() *conf.Bootstrap {
+	c := bootstrap.NewConfigProvider(Flags.Conf)
 	if err := c.Load(); err != nil {
 		panic(err)
 	}
@@ -63,8 +52,28 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
+	return &bc
+}
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, zlog.Logger(bc.Project))
+func main() {
+	flag.Parse()
+
+	bc := loadConfig()
+	if bc == nil {
+		panic("load config failed")
+	}
+
+	shutdownMetric := bootstrap.NewMetricProvider(bc.Metric.Endpoint)
+	defer shutdownMetric()
+
+	shutdownTrace := bootstrap.NewTracerProvider(bc.Trace.Endpoint, Flags.Env, &Service)
+	defer shutdownTrace()
+
+	logger := bootstrap.NewLoggerProvider(Flags.Env, bc.Log)
+	logger = log.With(logger, "trace_id", tracing.TraceID())
+	logger = log.With(logger, "span_id", tracing.SpanID())
+
+	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {
 		panic(err)
 	}

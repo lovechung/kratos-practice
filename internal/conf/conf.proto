@@ -6,9 +6,20 @@ option go_package = "kratos-practice/internal/conf;conf";
 import "google/protobuf/duration.proto";
 
 message Bootstrap {
-  Server server = 1;
-  Data data = 2;
-  Project project = 3;
+  Trace trace = 1;
+  Metric metric = 2;
+  Server server = 3;
+  Data data = 4;
+  Auth auth = 5;
+  Log log = 6;
+}
+
+message Trace {
+  string endpoint = 1;
+}
+
+message Metric {
+  string endpoint = 1;
 }
 
 message Server {
@@ -44,10 +55,11 @@ message Data {
   Redis redis = 2;
 }
 
-message Project {
-  string profile = 1;
-  Log log = 2;
-  message Log {
-    string file = 1;
-  }
+message Auth {
+  string service_key = 1;
+  string api_key = 2;
+}
+
+message Log {
+  string file = 1;
 }

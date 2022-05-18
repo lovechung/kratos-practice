@@ -4,22 +4,28 @@ import (
 	"context"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-redis/redis/extra/redisotel"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
 	"github.com/nitishm/go-rejson/v4"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"kratos-practice/internal/biz"
 	"kratos-practice/internal/conf"
 	"kratos-practice/internal/data/ent"
+	"time"
 )
 
 var ProviderSet = wire.NewSet(NewTransaction, NewData, NewDB, NewRedis, NewUserRepo, NewCarRepo)
 
 type Data struct {
-	db     *ent.Client
-	rdb    *redis.Client
-	rejson *rejson.Handler
+	db  *ent.Client
+	rds *redis.Client
+	rjs *rejson.Handler
 }
 
 type contextTxKey struct{}
@@ -49,36 +55,47 @@ func NewTransaction(d *Data) biz.Transaction {
 	return d
 }
 
-func NewData(db *ent.Client, rdb *redis.Client, logger log.Logger) (*Data, func(), error) {
+func NewData(db *ent.Client, rds *redis.Client, logger log.Logger) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
+		if err := db.Close(); err != nil {
+			log.Error(err)
+		}
+		if err := rds.Close(); err != nil {
+			log.Error(err)
+		}
 	}
 
-	// redis扩展 re-json
-	rh := rejson.NewReJSONHandler()
-	rh.SetGoRedisClient(rdb)
+	// redis扩展 rejson
+	rjs := rejson.NewReJSONHandler()
+	rjs.SetGoRedisClient(rds)
 
 	return &Data{
-		db:     db,
-		rdb:    rdb,
-		rejson: rh,
+		db:  db,
+		rds: rds,
+		rjs: rjs,
 	}, cleanup, nil
 }
 
 func NewDB(conf *conf.Data, logger log.Logger) *ent.Client {
 	thisLog := log.NewHelper(logger)
 
-	//db, err := ent.Open(
-	//	conf.Database.Driver,
-	//	conf.Database.Source,
-	//)
-
 	drv, err := sql.Open(
 		conf.Database.Driver,
 		conf.Database.Source,
 	)
+	// 打印sql日志
 	sqlDrv := dialect.DebugWithContext(drv, func(ctx context.Context, i ...interface{}) {
-		thisLog.WithContext(ctx).Info(i...)
+		thisLog.WithContext(ctx).Debug(i...)
+		// 开启db trace
+		tracer := otel.Tracer("entgo.io/ent")
+		_, span := tracer.Start(ctx,
+			"query",
+			trace.WithAttributes(
+				attribute.String("sql", fmt.Sprint(i...)),
+			),
+		)
+		defer span.End()
 	})
 	db := ent.NewClient(ent.Driver(sqlDrv))
 
@@ -95,7 +112,7 @@ func NewDB(conf *conf.Data, logger log.Logger) *ent.Client {
 func NewRedis(conf *conf.Data, logger log.Logger) *redis.Client {
 	thisLog := log.NewHelper(logger)
 
-	rdb := redis.NewClient(&redis.Options{
+	rds := redis.NewClient(&redis.Options{
 		Addr:         conf.Redis.Addr,
 		Password:     conf.Redis.Password,
 		DB:           int(conf.Redis.Db),
@@ -103,12 +120,14 @@ func NewRedis(conf *conf.Data, logger log.Logger) *redis.Client {
 		WriteTimeout: conf.Redis.WriteTimeout.AsDuration(),
 		ReadTimeout:  conf.Redis.ReadTimeout.AsDuration(),
 	})
+	// 开启redis trace
+	rds.AddHook(redisotel.TracingHook{})
 
-	timeout, cancelFunc := context.WithTimeout(context.Background(), conf.Redis.DialTimeout.AsDuration())
+	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancelFunc()
-	err := rdb.Ping(timeout).Err()
+	err := rds.Ping(timeout).Err()
 	if err != nil {
 		thisLog.Fatalf("redis连接失败: %v", err)
 	}
-	return rdb
+	return rds
 }

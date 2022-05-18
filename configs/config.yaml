@@ -1,3 +1,9 @@
+trace:
+  endpoint: 127.0.0.1:4317
+
+metric:
+  endpoint: 127.0.0.1:4317
+
 server:
   http:
     addr: 0.0.0.0:8000
@@ -17,7 +23,5 @@ data:
     read_timeout: 0.2s
     write_timeout: 0.2s
 
-project:
-  profile: dev
-  log:
-    file: /Users/admin/Documents/logs
+log:
+  file: /data/logs/app.logs

@@ -1,4 +1,4 @@
-package zlog
+package bootstrap
 
 import (
 	"fmt"
@@ -7,10 +7,9 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"kratos-practice/internal/conf"
+	"kratos-practice/internal/pkg/util/time"
 	"os"
 )
-
-var _ log.Logger = (*ZapLogger)(nil)
 
 // ZapLogger is a logger impl.
 type ZapLogger struct {
@@ -18,8 +17,8 @@ type ZapLogger struct {
 	Sync func() error
 }
 
-// Logger 配置zap日志,将zap日志库引入
-func Logger(conf *conf.Project) log.Logger {
+// NewLoggerProvider 配置zap日志,将zap日志库引入
+func NewLoggerProvider(env string, conf *conf.Log) log.Logger {
 	//配置zap日志库的编码器
 	encoder := zapcore.EncoderConfig{
 		TimeKey:        "time",
@@ -28,17 +27,16 @@ func Logger(conf *conf.Project) log.Logger {
 		CallerKey:      "caller",
 		MessageKey:     "msg",
 		StacktraceKey:  "stack",
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeTime:     zapcore.TimeEncoderOfLayout(time.FORMATTER),
 		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	}
 
 	return NewZapLogger(
-		conf,
-		encoder,
-		zap.NewAtomicLevelAt(zapcore.DebugLevel),
+		env, conf, encoder,
+		zap.NewAtomicLevelAt(zapcore.InfoLevel),
 		zap.AddStacktrace(
 			zap.NewAtomicLevelAt(zapcore.ErrorLevel)),
 		zap.AddCaller(),
@@ -48,15 +46,14 @@ func Logger(conf *conf.Project) log.Logger {
 }
 
 // NewZapLogger return a zap logger.
-func NewZapLogger(conf *conf.Project, encoder zapcore.EncoderConfig, level zap.AtomicLevel, opts ...zap.Option) *ZapLogger {
-	//日志切割
-	writeSyncer := getLogWriter(conf)
-	//设置日志级别
-	level.SetLevel(zap.InfoLevel)
+func NewZapLogger(env string, conf *conf.Log,
+	encoder zapcore.EncoderConfig, level zap.AtomicLevel, opts ...zap.Option) *ZapLogger {
+
 	var core zapcore.Core
-	//开发模式下打印到标准输出
-	// --根据配置文件判断输出到控制台还是日志文件--
-	if conf.Profile == "dev" {
+	// 开发模式下打印到标准输出
+	if env == "dev" {
+		// 本地开发时，设置日志级别为debug
+		level.SetLevel(zap.DebugLevel)
 		core = zapcore.NewCore(
 			zapcore.NewConsoleEncoder(encoder),                      // 编码器配置
 			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)), // 打印到控制台
@@ -65,18 +62,23 @@ func NewZapLogger(conf *conf.Project, encoder zapcore.EncoderConfig, level zap.A
 	} else {
 		core = zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoder), // 编码器配置
-			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(writeSyncer)), // 打印到控制台和文件
+			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(getLogWriter(conf))), // 打印到控制台和文件
 			level, // 日志级别
 		)
 	}
+
 	zapLogger := zap.New(core, opts...)
+
+	zap.Fields(zap.String("trace_id", "trace_id"))
+	zap.Fields(zap.String("span_id", "span_id"))
+
 	return &ZapLogger{log: zapLogger, Sync: zapLogger.Sync}
 }
 
 // 日志自动切割，采用 lumberjack 实现的
-func getLogWriter(conf *conf.Project) zapcore.WriteSyncer {
+func getLogWriter(conf *conf.Log) zapcore.WriteSyncer {
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   conf.Log.File,
+		Filename:   conf.File,
 		MaxSize:    100,   //日志的最大大小（M）
 		MaxBackups: 5,     //日志的最大保存数量
 		MaxAge:     30,    //日志文件存储最大天数

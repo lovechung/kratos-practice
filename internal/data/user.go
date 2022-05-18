@@ -10,6 +10,7 @@ import (
 	"kratos-practice/internal/data/ent"
 	"kratos-practice/internal/data/ent/predicate"
 	"kratos-practice/internal/data/ent/user"
+	ex "kratos-practice/internal/pkg/errors"
 	"kratos-practice/internal/pkg/util/pagination"
 	"time"
 )
@@ -63,13 +64,13 @@ func (r userRepo) ListUser(ctx context.Context, page, pageSize int, username *st
 func (r userRepo) GetById(ctx context.Context, id int64) (*biz.User, error) {
 	// 先从缓存中取
 	cacheKey := userCacheKey(fmt.Sprintf("%d", id))
-	u, err := r.getUserCache(cacheKey)
+	u, err := r.getUserCache(ctx, cacheKey)
 
 	if err != nil {
 		// 缓存没有命中，则从数据库取
 		u, err = r.data.db.User.Get(ctx, id)
 		if err != nil {
-			return nil, biz.ErrUserNotFound
+			return nil, ex.ErrUserNotFound
 		}
 		// 重新刷入缓存
 		r.setUserCache(ctx, u, cacheKey)
@@ -94,7 +95,7 @@ func (r userRepo) Update(ctx context.Context, u *biz.User) error {
 		Exec(ctx)
 	// 模拟一个异常
 	if *u.Password == "123456" {
-		err = biz.ErrUserNotFound
+		err = ex.ErrUserNotFound
 	}
 	return err
 }
@@ -115,8 +116,8 @@ func ConvertToUser(u *ent.User) *biz.User {
 	}
 }
 
-func (r *userRepo) getUserCache(key string) (*ent.User, error) {
-	res, err := redis.Bytes(r.data.rejson.JSONGet(key, "."))
+func (r *userRepo) getUserCache(ctx context.Context, key string) (*ent.User, error) {
+	res, err := redis.Bytes(r.data.rjs.SetContext(ctx).JSONGet(key, "."))
 	if err != nil {
 		return nil, err
 	}
@@ -130,12 +131,12 @@ func (r *userRepo) getUserCache(key string) (*ent.User, error) {
 }
 
 func (r *userRepo) setUserCache(ctx context.Context, user *ent.User, key string) {
-	_, err := r.data.rejson.JSONSet(key, ".", user)
+	_, err := r.data.rjs.SetContext(ctx).JSONSet(key, ".", user)
 	if err != nil {
 		r.log.Errorf("设置用户缓存失败")
 	}
 	// 设置过期时间
-	err = r.data.rdb.Expire(ctx, key, time.Second*30).Err()
+	err = r.data.rds.Expire(ctx, key, time.Minute*10).Err()
 	if err != nil {
 		r.log.Errorf("设置用户key过期时间失败")
 	}

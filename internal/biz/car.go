@@ -2,13 +2,8 @@ package biz
 
 import (
 	"context"
-	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"time"
-)
-
-var (
-	ErrCarNotFound = errors.InternalServer("20000", "该汽车不存在")
 )
 
 type Car struct {

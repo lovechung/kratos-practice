@@ -3,6 +3,9 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"kratos-practice/internal/pkg/util/pagination"
 	"kratos-practice/internal/pkg/util/time"
@@ -36,6 +39,17 @@ func (s *UserService) ListUser(ctx context.Context, req *v1.ListUserReq) (*v1.Li
 }
 
 func (s *UserService) GetUser(ctx context.Context, req *v1.UserReq) (*v1.UserReply, error) {
+
+	// todo metric测试
+	serverAttribute := attribute.String("server-attribute", "foo")
+	commonLabels := []attribute.KeyValue{serverAttribute}
+	meter := global.Meter("demo-server-meter")
+	requestCount, _ := meter.SyncInt64().Counter(
+		"demo_server/request_counts",
+		instrument.WithDescription("The number of requests received"),
+	)
+	requestCount.Add(ctx, 1, commonLabels...)
+
 	user, err := s.uc.GetUserById(ctx, req.Id)
 	if err != nil {
 		return nil, err

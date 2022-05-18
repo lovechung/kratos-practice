@@ -8,6 +8,7 @@ import (
 	"kratos-practice/internal/data/ent"
 	"kratos-practice/internal/data/ent/car"
 	"kratos-practice/internal/data/ent/user"
+	ex "kratos-practice/internal/pkg/errors"
 	"kratos-practice/internal/pkg/util/pagination"
 )
 
@@ -101,7 +102,7 @@ func (r carRepo) GetById(ctx context.Context, id int64) (*biz.CarReply, error) {
 		return nil, err
 	}
 	if rsp == nil {
-		return nil, biz.ErrCarNotFound
+		return nil, ex.ErrCarNotFound
 	}
 	return rsp[0], err
 
