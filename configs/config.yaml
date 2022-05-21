@@ -1,10 +1,5 @@
-trace:
-  endpoint: 127.0.0.1:4317
-
-metric:
-  endpoint: 127.0.0.1:4317
-
 server:
+  profile: dev
   http:
     addr: 0.0.0.0:8000
     timeout: 1s
@@ -23,5 +18,8 @@ data:
     read_timeout: 0.2s
     write_timeout: 0.2s
 
+otel:
+  endpoint: 127.0.0.1:4317
+
 log:
-  file: /data/logs/app.logs
+  file: /Users/xiaokang/Documents/logs/app.log

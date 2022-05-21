@@ -47,7 +47,7 @@ func ConvertToCarReply(c *biz.CarReply) *v1.CarReply {
 		Id:           c.Id,
 		Username:     c.UserName,
 		Model:        c.Model,
-		RegisteredAt: time.Format(c.RegisteredAt),
+		RegisteredAt: t.Format(c.RegisteredAt),
 	}
 }
 

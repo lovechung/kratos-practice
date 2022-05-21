@@ -7,17 +7,29 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/go-kratos/swagger-api/openapiv2"
+	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/unit"
 	"kratos-practice/api/v1"
 	"kratos-practice/internal/conf"
+	"kratos-practice/internal/pkg/middleware/otel"
 	"kratos-practice/internal/service"
+
+	metrics "kratos-practice/internal/pkg/middleware/metric"
 )
 
 // NewHTTPServer new a HTTP server.
 func NewHTTPServer(c *conf.Server, us *service.UserService, cs *service.CarService, logger log.Logger) *http.Server {
+	meter := global.Meter("kratos-practice")
+	requestHistogram, _ := meter.SyncInt64().Histogram("request_seconds", instrument.WithUnit(unit.Milliseconds))
+
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
 			tracing.Server(),
+			metrics.Server(
+				metrics.WithSeconds(otel.NewHistogram(requestHistogram)),
+			),
 			logging.Server(logger),
 		),
 	}

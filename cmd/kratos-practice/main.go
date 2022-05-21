@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"kratos-practice/internal/conf"
@@ -63,15 +62,13 @@ func main() {
 		panic("load config failed")
 	}
 
-	shutdownMetric := bootstrap.NewMetricProvider(bc.Metric.Endpoint)
+	shutdownMetric := bootstrap.NewMetricProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
 	defer shutdownMetric()
 
-	shutdownTrace := bootstrap.NewTracerProvider(bc.Trace.Endpoint, Flags.Env, &Service)
+	shutdownTrace := bootstrap.NewTracerProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
 	defer shutdownTrace()
 
-	logger := bootstrap.NewLoggerProvider(Flags.Env, bc.Log)
-	logger = log.With(logger, "trace_id", tracing.TraceID())
-	logger = log.With(logger, "span_id", tracing.SpanID())
+	logger := bootstrap.NewLoggerProvider(bc.Server.Profile, bc.Log, &Service)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
 	if err != nil {

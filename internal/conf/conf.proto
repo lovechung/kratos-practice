@@ -6,23 +6,19 @@ option go_package = "kratos-practice/internal/conf;conf";
 import "google/protobuf/duration.proto";
 
 message Bootstrap {
-  Trace trace = 1;
-  Metric metric = 2;
-  Server server = 3;
-  Data data = 4;
-  Auth auth = 5;
-  Log log = 6;
+  Server server = 1;
+  Data data = 2;
+  Auth auth = 3;
+  Otel otel = 4;
+  Log log = 5;
 }
 
-message Trace {
-  string endpoint = 1;
-}
-
-message Metric {
+message Otel {
   string endpoint = 1;
 }
 
 message Server {
+  string profile = 1;
   message HTTP {
     string network = 1;
     string addr = 2;
@@ -33,8 +29,8 @@ message Server {
     string addr = 2;
     google.protobuf.Duration timeout = 3;
   }
-  HTTP http = 1;
-  GRPC grpc = 2;
+  HTTP http = 2;
+  GRPC grpc = 3;
 }
 
 message Data {

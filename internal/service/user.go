@@ -3,15 +3,11 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/metric/instrument"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"kratos-practice/internal/pkg/util/pagination"
-	"kratos-practice/internal/pkg/util/time"
-
 	"kratos-practice/api/v1"
 	"kratos-practice/internal/biz"
+	"kratos-practice/internal/pkg/util/pagination"
+	"kratos-practice/internal/pkg/util/time"
 )
 
 type UserService struct {
@@ -40,15 +36,8 @@ func (s *UserService) ListUser(ctx context.Context, req *v1.ListUserReq) (*v1.Li
 
 func (s *UserService) GetUser(ctx context.Context, req *v1.UserReq) (*v1.UserReply, error) {
 
-	// todo metric测试
-	serverAttribute := attribute.String("server-attribute", "foo")
-	commonLabels := []attribute.KeyValue{serverAttribute}
-	meter := global.Meter("demo-server-meter")
-	requestCount, _ := meter.SyncInt64().Counter(
-		"demo_server/request_counts",
-		instrument.WithDescription("The number of requests received"),
-	)
-	requestCount.Add(ctx, 1, commonLabels...)
+	// 打印一条trace日志
+	s.log.WithContext(ctx).Infof("我是一条【%s】trace日志噢", "info")
 
 	user, err := s.uc.GetUserById(ctx, req.Id)
 	if err != nil {
@@ -62,7 +51,7 @@ func ConvertToUserReply(u *biz.User) *v1.UserReply {
 		Id:        u.Id,
 		Username:  *u.Username,
 		Password:  *u.Password,
-		CreatedAt: time.Format(*u.CreatedAt),
+		CreatedAt: t.Format(*u.CreatedAt),
 	}
 }
 

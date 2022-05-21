@@ -1,4 +1,4 @@
-package time
+package t
 
 import "time"
 

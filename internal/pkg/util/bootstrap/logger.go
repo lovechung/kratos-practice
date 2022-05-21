@@ -1,15 +1,22 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"kratos-practice/internal/conf"
-	"kratos-practice/internal/pkg/util/time"
+	t "kratos-practice/internal/pkg/util/time"
 	"os"
+	"runtime"
+	"strconv"
+	"strings"
 )
+
+var _ log.Logger = (*ZapLogger)(nil)
 
 // ZapLogger is a logger impl.
 type ZapLogger struct {
@@ -18,23 +25,32 @@ type ZapLogger struct {
 }
 
 // NewLoggerProvider 配置zap日志,将zap日志库引入
-func NewLoggerProvider(env string, conf *conf.Log) log.Logger {
-	//配置zap日志库的编码器
-	encoder := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stack",
-		EncodeTime:     zapcore.TimeEncoderOfLayout(time.FORMATTER),
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.FullCallerEncoder,
+func NewLoggerProvider(env string, conf *conf.Log, serviceInfo *ServiceInfo) log.Logger {
+	var el zapcore.LevelEncoder
+	if env == "dev" {
+		// 开发环境下，level加色
+		el = zapcore.CapitalColorLevelEncoder
+	} else {
+		el = zapcore.CapitalLevelEncoder
 	}
 
-	return NewZapLogger(
+	// 配置zap日志库的编码器
+	encoder := zapcore.EncoderConfig{
+		TimeKey:  "time",
+		LevelKey: "level",
+		NameKey:  "logger",
+		//CallerKey:      "caller",
+		//MessageKey:     "msg",
+		//StacktraceKey:  "stack",
+		EncodeTime:     zapcore.TimeEncoderOfLayout(t.FORMATTER),
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    el,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+
+	var logger log.Logger
+	logger = NewZapLogger(
 		env, conf, encoder,
 		zap.NewAtomicLevelAt(zapcore.InfoLevel),
 		zap.AddStacktrace(
@@ -43,6 +59,34 @@ func NewLoggerProvider(env string, conf *conf.Log) log.Logger {
 		zap.AddCallerSkip(2),
 		zap.Development(),
 	)
+
+	// 添加全局字段
+	logger = log.With(logger,
+		"service.name", serviceInfo.Name,
+		"trace_id", tracing.TraceID(),
+		"span_id", tracing.SpanID(),
+		"caller", Caller(),
+	)
+	return logger
+}
+
+// Caller 重写log的Caller方法
+func Caller() log.Valuer {
+	return func(context.Context) interface{} {
+		d := 3
+		_, file, line, _ := runtime.Caller(d)
+		if strings.LastIndex(file, "/log/filter.go") > 0 {
+			d++
+			_, file, line, _ = runtime.Caller(d)
+		}
+		if strings.LastIndex(file, "/log/helper.go") > 0 {
+			d++
+			_, file, line, _ = runtime.Caller(d)
+		}
+		tmp := strings.LastIndexByte(file, '/')
+		from := strings.LastIndexByte(file[0:tmp-1], '/')
+		return file[from+1:] + ":" + strconv.Itoa(line)
+	}
 }
 
 // NewZapLogger return a zap logger.
@@ -68,10 +112,6 @@ func NewZapLogger(env string, conf *conf.Log,
 	}
 
 	zapLogger := zap.New(core, opts...)
-
-	zap.Fields(zap.String("trace_id", "trace_id"))
-	zap.Fields(zap.String("span_id", "span_id"))
-
 	return &ZapLogger{log: zapLogger, Sync: zapLogger.Sync}
 }
 
