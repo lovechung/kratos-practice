@@ -9,6 +9,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
 	"github.com/rueian/rueidis"
+	"github.com/rueian/rueidis/rueidiscompat"
 	"github.com/rueian/rueidis/rueidisotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -21,8 +22,9 @@ import (
 var ProviderSet = wire.NewSet(NewTransaction, NewData, NewDB, NewRedis, NewUserRepo, NewCarRepo)
 
 type Data struct {
-	db  *ent.Client
-	rds rueidis.Client
+	db     *ent.Client
+	rds    rueidis.Client
+	rdsCmd rueidiscompat.Cmdable
 }
 
 type contextTxKey struct{}
@@ -62,8 +64,9 @@ func NewData(db *ent.Client, rds rueidis.Client, logger log.Logger) (*Data, func
 	}
 
 	return &Data{
-		db:  db,
-		rds: rds,
+		db:     db,
+		rds:    rds,
+		rdsCmd: rueidiscompat.NewAdapter(rds),
 	}, cleanup, nil
 }
 
