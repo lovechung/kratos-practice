@@ -10,16 +10,16 @@ server:
 data:
   database:
     driver: mysql
-    source: root:root@tcp(192.168.31.96:3306)/test?parseTime=true
+    source: root:Jicco_2021@tcp(139.224.187.162:3306)/test?parseTime=true
   redis:
-    addr: 192.168.31.96:6379
-    password: admin
+    addr: 139.224.187.162:6379
+    password: Jicco_2021
     dial_timeout: 1s
     read_timeout: 0.2s
     write_timeout: 0.2s
 
 otel:
-  endpoint: 127.0.0.1:4317
+  endpoint: 139.224.187.162:4317
 
 log:
   file: /Users/xiaokang/Documents/logs/app.log

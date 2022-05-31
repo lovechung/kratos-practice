@@ -6,26 +6,23 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-redis/redis/extra/redisotel"
-	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
-	"github.com/nitishm/go-rejson/v4"
+	"github.com/rueian/rueidis"
+	"github.com/rueian/rueidis/rueidisotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"kratos-practice/internal/biz"
 	"kratos-practice/internal/conf"
 	"kratos-practice/internal/data/ent"
-	"time"
 )
 
 var ProviderSet = wire.NewSet(NewTransaction, NewData, NewDB, NewRedis, NewUserRepo, NewCarRepo)
 
 type Data struct {
 	db  *ent.Client
-	rds *redis.Client
-	rjs *rejson.Handler
+	rds rueidis.Client
 }
 
 type contextTxKey struct{}
@@ -55,25 +52,18 @@ func NewTransaction(d *Data) biz.Transaction {
 	return d
 }
 
-func NewData(db *ent.Client, rds *redis.Client, logger log.Logger) (*Data, func(), error) {
+func NewData(db *ent.Client, rds rueidis.Client, logger log.Logger) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 		if err := db.Close(); err != nil {
 			log.Error(err)
 		}
-		if err := rds.Close(); err != nil {
-			log.Error(err)
-		}
+		rds.Close()
 	}
-
-	// redis扩展 rejson
-	rjs := rejson.NewReJSONHandler()
-	rjs.SetGoRedisClient(rds)
 
 	return &Data{
 		db:  db,
 		rds: rds,
-		rjs: rjs,
 	}, cleanup, nil
 }
 
@@ -109,25 +99,19 @@ func NewDB(conf *conf.Data, logger log.Logger) *ent.Client {
 	return db
 }
 
-func NewRedis(conf *conf.Data, logger log.Logger) *redis.Client {
+func NewRedis(conf *conf.Data, logger log.Logger) rueidis.Client {
 	thisLog := log.NewHelper(logger)
 
-	rds := redis.NewClient(&redis.Options{
-		Addr:         conf.Redis.Addr,
-		Password:     conf.Redis.Password,
-		DB:           int(conf.Redis.Db),
-		DialTimeout:  conf.Redis.DialTimeout.AsDuration(),
-		WriteTimeout: conf.Redis.WriteTimeout.AsDuration(),
-		ReadTimeout:  conf.Redis.ReadTimeout.AsDuration(),
+	client, err := rueidis.NewClient(rueidis.ClientOption{
+		InitAddress:      []string{conf.Redis.Addr},
+		Password:         conf.Redis.Password,
+		SelectDB:         int(conf.Redis.Db),
+		ConnWriteTimeout: conf.Redis.WriteTimeout.AsDuration(),
 	})
-	// 开启redis trace
-	rds.AddHook(redisotel.TracingHook{})
+	client = rueidisotel.WithClient(client)
 
-	timeout, cancelFunc := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancelFunc()
-	err := rds.Ping(timeout).Err()
 	if err != nil {
 		thisLog.Fatalf("redis连接失败: %v", err)
 	}
-	return rds
+	return client
 }

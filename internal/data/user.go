@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/gomodule/redigo/redis"
 	"kratos-practice/internal/biz"
 	"kratos-practice/internal/data/ent"
 	"kratos-practice/internal/data/ent/predicate"
 	"kratos-practice/internal/data/ent/user"
 	ex "kratos-practice/internal/pkg/errors"
 	"kratos-practice/internal/pkg/util/pagination"
-	"time"
 )
 
 type userRepo struct {
@@ -117,13 +115,8 @@ func ConvertToUser(u *ent.User) *biz.User {
 }
 
 func (r *userRepo) getUserCache(ctx context.Context, key string) (*ent.User, error) {
-	res, err := redis.Bytes(r.data.rjs.SetContext(ctx).JSONGet(key, "."))
-	if err != nil {
-		return nil, err
-	}
-
-	var cacheUser = &ent.User{}
-	err = json.Unmarshal(res, cacheUser)
+	cacheUser := &ent.User{}
+	err := r.data.rds.Do(ctx, r.data.rds.B().JsonGet().Key(key).Paths(".").Build()).DecodeJSON(cacheUser)
 	if err != nil {
 		return nil, err
 	}
@@ -131,13 +124,7 @@ func (r *userRepo) getUserCache(ctx context.Context, key string) (*ent.User, err
 }
 
 func (r *userRepo) setUserCache(ctx context.Context, user *ent.User, key string) {
-	_, err := r.data.rjs.SetContext(ctx).JSONSet(key, ".", user)
-	if err != nil {
-		r.log.Errorf("设置用户缓存失败")
-	}
-	// 设置过期时间
-	err = r.data.rds.Expire(ctx, key, time.Minute*10).Err()
-	if err != nil {
-		r.log.Errorf("设置用户key过期时间失败")
-	}
+	val, _ := json.Marshal(user)
+	r.data.rds.Do(ctx, r.data.rds.B().JsonSet().Key(key).Path(".").Value(string(val)).Build())
+	r.data.rds.Do(ctx, r.data.rds.B().Expire().Key(key).Seconds(600).Build())
 }
