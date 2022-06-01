@@ -42,6 +42,7 @@ func (uc *UserUseCase) GetUserById(ctx context.Context, id int64) (*User, error)
 
 func (uc *UserUseCase) SaveUser(ctx context.Context, u *User) error {
 	id, err := uc.r.Save(ctx, u)
+	// 打印一条普通（非trace）日志
 	uc.log.Infof("新增的用户id=%d", id)
 	return err
 }

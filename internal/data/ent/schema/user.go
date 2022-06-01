@@ -31,10 +31,10 @@ func (User) Fields() []ent.Field {
 		field.String("password").
 			Optional(),
 		field.Time("created_at").
-			Default(time.Now).
+			Default(time.Now().Local).
 			SchemaType(map[string]string{dialect.MySQL: "datetime"}),
 		field.Time("updated_at").
-			Default(time.Now).
+			Default(time.Now().Local).
 			SchemaType(map[string]string{dialect.MySQL: "datetime"}),
 	}
 }

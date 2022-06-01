@@ -105,7 +105,6 @@ func (r carRepo) GetById(ctx context.Context, id int64) (*biz.CarReply, error) {
 		return nil, ex.ErrCarNotFound
 	}
 	return rsp[0], err
-
 }
 
 func (r carRepo) Save(ctx context.Context, c *biz.Car) (int64, error) {

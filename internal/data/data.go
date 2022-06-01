@@ -10,7 +10,6 @@ import (
 	"github.com/google/wire"
 	"github.com/rueian/rueidis"
 	"github.com/rueian/rueidis/rueidiscompat"
-	"github.com/rueian/rueidis/rueidisotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -111,7 +110,8 @@ func NewRedis(conf *conf.Data, logger log.Logger) rueidis.Client {
 		SelectDB:         int(conf.Redis.Db),
 		ConnWriteTimeout: conf.Redis.WriteTimeout.AsDuration(),
 	})
-	client = rueidisotel.WithClient(client)
+	// todo rueidisotel支持的otel版本过低，导致启动报错
+	//client = rueidisotel.WithClient(client)
 
 	if err != nil {
 		thisLog.Fatalf("redis连接失败: %v", err)

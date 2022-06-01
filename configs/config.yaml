@@ -10,7 +10,7 @@ server:
 data:
   database:
     driver: mysql
-    source: root:Jicco_2021@tcp(139.224.187.162:3306)/test?parseTime=true
+    source: root:Jicco_2021@tcp(139.224.187.162:3306)/test?parseTime=true&loc=Local
   redis:
     addr: 139.224.187.162:6379
     password: Jicco_2021

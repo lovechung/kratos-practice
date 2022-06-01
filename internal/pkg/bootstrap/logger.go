@@ -84,8 +84,8 @@ func Caller() log.Valuer {
 			_, file, line, _ = runtime.Caller(d)
 		}
 		tmp := strings.LastIndexByte(file, '/')
-		from := strings.LastIndexByte(file[0:tmp-1], '/')
-		return file[from+1:] + ":" + strconv.Itoa(line)
+		idx := strings.LastIndexByte(file[0:tmp-1], '/')
+		return file[idx+1:] + ":" + strconv.Itoa(line)
 	}
 }
 

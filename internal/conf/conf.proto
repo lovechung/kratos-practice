@@ -13,10 +13,6 @@ message Bootstrap {
   Log log = 5;
 }
 
-message Otel {
-  string endpoint = 1;
-}
-
 message Server {
   string profile = 1;
   message HTTP {
@@ -56,6 +52,20 @@ message Auth {
   string api_key = 2;
 }
 
+message Otel {
+  string endpoint = 1;
+}
+
 message Log {
   string file = 1;
+}
+
+message Registry {
+  message Consul {
+    string address = 1;
+    string scheme = 2;
+    string token = 3;
+    bool health_check = 4;
+  }
+  Consul consul = 1;
 }

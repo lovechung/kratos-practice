@@ -4,10 +4,11 @@ import (
 	"flag"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"kratos-practice/internal/conf"
-	"kratos-practice/internal/pkg/util/bootstrap"
+	"kratos-practice/internal/pkg/bootstrap"
 )
 
 // go build -ldflags "-X main.Service.Version=x.y.z"
@@ -26,22 +27,20 @@ func init() {
 
 }
 
-func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
+func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, rr registry.Registrar) *kratos.App {
 	return kratos.New(
 		kratos.ID(Service.GetInstanceId()),
 		kratos.Name(Service.Name),
 		kratos.Version(Service.Version),
 		kratos.Metadata(Service.Metadata),
 		kratos.Logger(logger),
-		kratos.Server(
-			hs,
-			gs,
-		),
+		kratos.Server(hs, gs),
+		kratos.Registrar(rr),
 	)
 }
 
-// 加载配置
-func loadConfig() *conf.Bootstrap {
+// 加载启动配置
+func loadConfig() (*conf.Bootstrap, *conf.Registry) {
 	c := bootstrap.NewConfigProvider(Flags.Conf)
 	if err := c.Load(); err != nil {
 		panic(err)
@@ -51,26 +50,41 @@ func loadConfig() *conf.Bootstrap {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
-	return &bc
+
+	var rc conf.Registry
+	if err := c.Scan(&rc); err != nil {
+		panic(err)
+	}
+
+	return &bc, &rc
+}
+
+// 加载otel配置
+func loadOtel(bc *conf.Bootstrap) {
+	shutdownTrace := bootstrap.NewTracerProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
+	defer shutdownTrace()
+	shutdownMetric := bootstrap.NewMetricProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
+	defer shutdownMetric()
+}
+
+// 加载日志配置
+func loadLogger(bc *conf.Bootstrap) log.Logger {
+	return bootstrap.NewLoggerProvider(bc.Server.Profile, bc.Log, &Service)
 }
 
 func main() {
 	flag.Parse()
 
-	bc := loadConfig()
-	if bc == nil {
+	bc, rc := loadConfig()
+	if bc == nil || rc == nil {
 		panic("load config failed")
 	}
 
-	shutdownMetric := bootstrap.NewMetricProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
-	defer shutdownMetric()
+	loadOtel(bc)
 
-	shutdownTrace := bootstrap.NewTracerProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
-	defer shutdownTrace()
+	logger := loadLogger(bc)
 
-	logger := bootstrap.NewLoggerProvider(bc.Server.Profile, bc.Log, &Service)
-
-	app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, rc, logger)
 	if err != nil {
 		panic(err)
 	}

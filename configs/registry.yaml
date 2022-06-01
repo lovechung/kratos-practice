@@ -1,0 +1,5 @@
+consul:
+  address: 139.224.187.162:8500
+  scheme: http
+  token: f86ff0d5-ee3d-70af-a01a-8e5634bd785c
+  health_check: false

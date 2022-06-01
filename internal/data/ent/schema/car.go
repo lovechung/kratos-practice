@@ -30,7 +30,7 @@ func (Car) Fields() []ent.Field {
 		field.String("model").
 			Optional(),
 		field.Time("registered_at").
-			Default(time.Now).
+			Default(time.Now().Local).
 			SchemaType(map[string]string{dialect.MySQL: "datetime"}),
 	}
 }
