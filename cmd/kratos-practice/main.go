@@ -23,7 +23,6 @@ var (
 
 func init() {
 	Flags.Init()
-
 }
 
 func newApp(logger log.Logger, gs *grpc.Server, rr registry.Registrar) *kratos.App {

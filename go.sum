@@ -243,8 +243,8 @@ github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 h1:MtvEpTB6LX3v
 github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348/go.mod h1:B69LEHPfb2qLo0BaaOLcbitczOKLWTsrBG9LczfCD4k=
 github.com/lovechung/api-base v0.0.2 h1:SMHee1V2nZnLiWxRf4ul2XASsG0rcGW5f4ySi95pOKI=
 github.com/lovechung/api-base v0.0.2/go.mod h1:NWitZUdkbolDB7s4mOn+p5fUTnDoy3/qI8IMnSRF+Ag=
-github.com/lovechung/go-kit v0.0.8 h1:wG2hlJYGW+tKBlNb+cjpji61x6GXt3LCThEr13Nax2Q=
-github.com/lovechung/go-kit v0.0.8/go.mod h1:QiP1MZfc3ajQIkxO1rk823ML4L6uU0ZyHMIlEKsQMIw=
+github.com/lovechung/go-kit v0.1.0 h1:vEvIberCbnSZbNDWT8sAZoSl/QOSMvLlIV5QTdsF+RU=
+github.com/lovechung/go-kit v0.1.0/go.mod h1:QiP1MZfc3ajQIkxO1rk823ML4L6uU0ZyHMIlEKsQMIw=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 h1:6E+4a0GO5zZEnZ81pIr0yLvtUWk2if982qA3F3QD6H4=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0/go.mod h1:zJYVVT2jmtg6P3p1VtQj7WsuWi/y4VnjVBn7F8KPB3I=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=

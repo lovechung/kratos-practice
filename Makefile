@@ -18,11 +18,6 @@ config:
  	       --go_out=paths=source_relative:./internal \
 	       $(INTERNAL_PROTO_FILES)
 
-.PHONY: build
-# build
-build:
-	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
-
 .PHONY: generate
 # generate
 generate:
@@ -33,6 +28,10 @@ generate:
 .PHONY: all
 # generate all
 all:
-	make api;
 	make config;
 	make generate;
+
+.PHONY: build
+# build
+build:
+	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
