@@ -26,8 +26,7 @@ func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
 		field.String("username").
-			Optional().
-			MaxLen(20),
+			Optional(),
 		field.String("password").
 			Optional(),
 		field.Time("created_at").

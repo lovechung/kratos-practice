@@ -16,32 +16,11 @@ init:
 # generate internal proto
 config:
 	protoc --proto_path=./internal \
-	       --proto_path=./third_party \
  	       --go_out=paths=source_relative:./internal \
 	       $(INTERNAL_PROTO_FILES)
 
-.PHONY: api
-# generate api proto
-api:
-	protoc --proto_path=./api \
-	       --proto_path=./third_party \
- 	       --go_out=paths=source_relative:./api \
- 	       --go-http_out=paths=source_relative:./api \
- 	       --go-grpc_out=paths=source_relative:./api \
- 	       --openapi_out==paths=source_relative:. \
-	       $(API_PROTO_FILES)
-
 gnostic:
 	gnostic
-
-.PHONY: errors
-# generate error proto
-errors:
-	protoc --proto_path=. \
-             --proto_path=./third_party \
-             --go_out=paths=source_relative:. \
-             --go-errors_out=paths=source_relative:. \
-             $(API_PROTO_FILES)
 
 .PHONY: build
 # build

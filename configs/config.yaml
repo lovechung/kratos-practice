@@ -1,11 +1,10 @@
 server:
-  profile: dev
   http:
     addr: 0.0.0.0:8000
-    timeout: 1s
+    timeout: 0s
   grpc:
     addr: 0.0.0.0:9000
-    timeout: 1s
+    timeout: 0s
 
 data:
   database:
@@ -23,3 +22,9 @@ otel:
 
 log:
   file: /Users/xiaokang/Documents/logs/app.log
+
+consul:
+  address: 139.224.187.162:8500
+  scheme: http
+  token: 'f86ff0d5-ee3d-70af-a01a-8e5634bd785c'
+  health_check: false

@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	v1 "github.com/lovechung/api-base/api/user"
+	"github.com/lovechung/go-kit/util/pagination"
+	"github.com/lovechung/go-kit/util/time"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"kratos-practice/api/v1"
 	"kratos-practice/internal/biz"
-	"kratos-practice/internal/pkg/util/pagination"
-	"kratos-practice/internal/pkg/util/time"
 )
 
 type UserService struct {
@@ -34,7 +34,7 @@ func (s *UserService) ListUser(ctx context.Context, req *v1.ListUserReq) (*v1.Li
 	return rsp, err
 }
 
-func (s *UserService) GetUser(ctx context.Context, req *v1.UserReq) (*v1.UserReply, error) {
+func (s *UserService) GetUser(ctx context.Context, req *v1.UserIdParam) (*v1.UserReply, error) {
 
 	// 打印一条trace日志
 	s.log.WithContext(ctx).Infof("我是一条【%s】trace日志噢", "info")
@@ -72,7 +72,7 @@ func (s *UserService) UpdateUser(ctx context.Context, req *v1.UpdateUserReq) (*e
 	return nil, err
 }
 
-func (s *UserService) DeleteUser(ctx context.Context, req *v1.DeleteUserReq) (*emptypb.Empty, error) {
+func (s *UserService) DeleteUser(ctx context.Context, req *v1.UserIdParam) (*emptypb.Empty, error) {
 	err := s.uc.DeleteUser(ctx, req.Id)
 	return nil, err
 }

@@ -6,9 +6,8 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	"github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/lovechung/go-kit/bootstrap"
 	"kratos-practice/internal/conf"
-	"kratos-practice/internal/pkg/bootstrap"
 )
 
 // go build -ldflags "-X main.Service.Version=x.y.z"
@@ -27,21 +26,25 @@ func init() {
 
 }
 
-func newApp(logger log.Logger, hs *http.Server, gs *grpc.Server, rr registry.Registrar) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, rr registry.Registrar) *kratos.App {
 	return kratos.New(
 		kratos.ID(Service.GetInstanceId()),
 		kratos.Name(Service.Name),
 		kratos.Version(Service.Version),
 		kratos.Metadata(Service.Metadata),
 		kratos.Logger(logger),
-		kratos.Server(hs, gs),
+		kratos.Server(gs),
 		kratos.Registrar(rr),
 	)
 }
 
 // 加载启动配置
 func loadConfig() (*conf.Bootstrap, *conf.Registry) {
-	c := bootstrap.NewConfigProvider(Flags.Conf)
+	c := bootstrap.NewConfigProvider(Flags.Conf,
+		Flags.ConfigType,
+		Flags.ConfigHost,
+		Flags.ConfigToken,
+		"conf/"+Service.Name+"/"+Flags.Env+"/data")
 	if err := c.Load(); err != nil {
 		panic(err)
 	}
@@ -61,15 +64,15 @@ func loadConfig() (*conf.Bootstrap, *conf.Registry) {
 
 // 加载otel配置
 func loadOtel(bc *conf.Bootstrap) {
-	shutdownTrace := bootstrap.NewTracerProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
+	shutdownTrace := bootstrap.NewTracerProvider(bc.Otel.Endpoint, Flags.Env, &Service)
 	defer shutdownTrace()
-	shutdownMetric := bootstrap.NewMetricProvider(bc.Otel.Endpoint, bc.Server.Profile, &Service)
+	shutdownMetric := bootstrap.NewMetricProvider(bc.Otel.Endpoint, Flags.Env, &Service, false)
 	defer shutdownMetric()
 }
 
 // 加载日志配置
 func loadLogger(bc *conf.Bootstrap) log.Logger {
-	return bootstrap.NewLoggerProvider(bc.Server.Profile, bc.Log, &Service)
+	return bootstrap.NewLoggerProvider(Flags.Env, bc.Log.File, &Service)
 }
 
 func main() {

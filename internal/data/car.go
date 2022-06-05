@@ -4,12 +4,12 @@ import (
 	"context"
 	"entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/lovechung/go-kit/util/pagination"
 	"kratos-practice/internal/biz"
 	"kratos-practice/internal/data/ent"
 	"kratos-practice/internal/data/ent/car"
 	"kratos-practice/internal/data/ent/user"
 	ex "kratos-practice/internal/pkg/errors"
-	"kratos-practice/internal/pkg/util/pagination"
 )
 
 type carRepo struct {
@@ -102,7 +102,7 @@ func (r carRepo) GetById(ctx context.Context, id int64) (*biz.CarReply, error) {
 		return nil, err
 	}
 	if rsp == nil {
-		return nil, ex.ErrCarNotFound
+		return nil, ex.CarNotFound
 	}
 	return rsp[0], err
 }

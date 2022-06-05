@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/lovechung/go-kit/util/pagination"
 	"kratos-practice/internal/biz"
 	"kratos-practice/internal/data/ent"
 	"kratos-practice/internal/data/ent/predicate"
 	"kratos-practice/internal/data/ent/user"
 	ex "kratos-practice/internal/pkg/errors"
-	"kratos-practice/internal/pkg/util/pagination"
 )
 
 type userRepo struct {
@@ -68,7 +68,7 @@ func (r userRepo) GetById(ctx context.Context, id int64) (*biz.User, error) {
 		// 缓存没有命中，则从数据库取
 		u, err = r.data.db.User.Get(ctx, id)
 		if err != nil {
-			return nil, ex.ErrUserNotFound
+			return nil, ex.UserNotFound
 		}
 		// 重新刷入缓存
 		r.setUserCache(ctx, u, cacheKey)
@@ -92,8 +92,8 @@ func (r userRepo) Update(ctx context.Context, u *biz.User) error {
 		SetUser(u).
 		Exec(ctx)
 	// 模拟一个异常
-	if *u.Password == "123456" {
-		err = ex.ErrUserNotFound
+	if u.Password != nil && *u.Password == "123456" {
+		err = ex.UserNotFound
 	}
 	return err
 }

@@ -1,9 +1,10 @@
 package ex
 
 import "github.com/go-kratos/kratos/v2/errors"
+import user "github.com/lovechung/api-base/api/user"
 
 var (
-	ErrUserNotFound = errors.InternalServer("10000", "该用户不存在")
+	UserNotFound = user.ErrorUserNotFound("该用户不存在")
 
-	ErrCarNotFound = errors.InternalServer("20000", "该汽车不存在")
+	CarNotFound = errors.InternalServer("20000", "该汽车不存在")
 )

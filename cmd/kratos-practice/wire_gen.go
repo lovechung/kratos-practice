@@ -33,10 +33,9 @@ func wireApp(confServer *conf.Server, confData *conf.Data, registry *conf.Regist
 	carRepo := data.NewCarRepo(dataData, logger)
 	carUseCase := biz.NewCarUseCase(carRepo, transaction, logger)
 	carService := service.NewCarService(carUseCase, logger)
-	httpServer := server.NewHTTPServer(confServer, userService, carService, logger)
 	grpcServer := server.NewGRPCServer(confServer, userService, carService, logger)
-	registrar := server.NewRegistrar(registry)
-	app := newApp(logger, httpServer, grpcServer, registrar)
+	registrar := data.NewRegistrar(registry)
+	app := newApp(logger, grpcServer, registrar)
 	return app, func() {
 		cleanup()
 	}, nil

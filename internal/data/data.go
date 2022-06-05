@@ -5,9 +5,12 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"fmt"
+	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/registry"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
+	consulApi "github.com/hashicorp/consul/api"
 	"github.com/rueian/rueidis"
 	"github.com/rueian/rueidis/rueidiscompat"
 	"go.opentelemetry.io/otel"
@@ -18,7 +21,7 @@ import (
 	"kratos-practice/internal/data/ent"
 )
 
-var ProviderSet = wire.NewSet(NewTransaction, NewData, NewDB, NewRedis, NewUserRepo, NewCarRepo)
+var ProviderSet = wire.NewSet(NewTransaction, NewData, NewDB, NewRedis, NewRegistrar, NewUserRepo, NewCarRepo)
 
 type Data struct {
 	db     *ent.Client
@@ -117,4 +120,17 @@ func NewRedis(conf *conf.Data, logger log.Logger) rueidis.Client {
 		thisLog.Fatalf("redis连接失败: %v", err)
 	}
 	return client
+}
+
+func NewRegistrar(conf *conf.Registry) registry.Registrar {
+	c := consulApi.DefaultConfig()
+	c.Address = conf.Consul.Address
+	c.Scheme = conf.Consul.Scheme
+	c.Token = conf.Consul.Token
+	cli, err := consulApi.NewClient(c)
+	if err != nil {
+		panic(err)
+	}
+	r := consul.New(cli, consul.WithHealthCheck(conf.Consul.HealthCheck))
+	return r
 }

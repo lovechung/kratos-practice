@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	v1 "github.com/lovechung/api-base/api/car"
+	"github.com/lovechung/go-kit/util/pagination"
+	"github.com/lovechung/go-kit/util/time"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"kratos-practice/api/v1"
 	"kratos-practice/internal/biz"
-	"kratos-practice/internal/pkg/util/pagination"
-	"kratos-practice/internal/pkg/util/time"
 )
 
 type CarService struct {
@@ -34,7 +34,7 @@ func (s *CarService) ListCar(ctx context.Context, req *v1.ListCarReq) (*v1.ListC
 	return rsp, err
 }
 
-func (s *CarService) GetCar(ctx context.Context, req *v1.CarReq) (*v1.CarReply, error) {
+func (s *CarService) GetCar(ctx context.Context, req *v1.CarIdParam) (*v1.CarReply, error) {
 	c, err := s.uc.GetCarById(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -59,16 +59,15 @@ func (s *CarService) SaveCar(ctx context.Context, req *v1.SaveCarReq) (*emptypb.
 	return nil, err
 }
 
-func (s *CarService) UpdateCar(ctx context.Context, req *v1.UpdateCarReq) (*emptypb.Empty, error) {
+func (s *CarService) TradeCar(ctx context.Context, req *v1.TradeCarReq) (*emptypb.Empty, error) {
 	err := s.uc.UpdateCar(ctx, &biz.Car{
 		ID:     req.Id,
-		UserID: req.UserId,
-		Model:  req.Model,
+		UserID: &req.UserId,
 	})
 	return nil, err
 }
 
-func (s *CarService) DeleteCar(ctx context.Context, req *v1.DeleteCarReq) (*emptypb.Empty, error) {
+func (s *CarService) DeleteCar(ctx context.Context, req *v1.CarIdParam) (*emptypb.Empty, error) {
 	err := s.uc.DeleteCar(ctx, req.Id)
 	return nil, err
 }
